@@ -4,7 +4,7 @@ insert_into_table() {
     local meta_file="$DB_DIR/$CURRENT_DB/.$table_name.meta"
     
     if [ ! -f "$table_file" ]; then
-        echo -e "No table with that name : $table_name"
+        echo "No table with that name : $table_name"
         return
     fi
     
@@ -14,7 +14,7 @@ insert_into_table() {
     local primary_key=""
     local primary_key_index=-1
     
-    while IFS= read -r line; do
+    while read -r line; do
         columns+=("$line")
         local col_name=$(echo "$line" | cut -d: -f1)
         local col_type=$(echo "$line" | cut -d: -f2)
@@ -35,13 +35,13 @@ insert_into_table() {
             read -p "ennter value for ${col_names[$i]} with type of  (${col_types[$i]}): " value
             
             if [ "${col_types[$i]}" = "int" ] && [[ ! "$value" =~ ^-?[0-9]+$ ]]; then
-                echo -e "wrong int value"
+                echo "wrong int value"
                 continue
             fi
             
            if [ $i -eq $primary_key_index ]; then
                 if grep -q "^$value|" "$table_file"; then
-                    echo -e "Primary key value must be unique. This value already exists"
+                    echo "Primary key value must be unique. This value already exists"
                     continue
                 fi
             fi
@@ -53,7 +53,7 @@ insert_into_table() {
     
     local record=$(IFS="|"; echo "${values[*]}")
     echo "$record" >> "$table_file"
-    echo -e "inserted successfully"
+    echo "inserted successfully"
 }
 
 
@@ -65,23 +65,23 @@ select_from_table() {
     local meta_file="$DB_DIR/$CURRENT_DB/.$table_name.meta"
     
     if [ ! -f "$table_file" ]; then
-        echo -e "No table with that name : $table_name"
+        echo "No table with that name : $table_name"
         return
     fi
     
     local col_names=()
-    while IFS= read -r line; do
+    while read -r line; do
         local col_name=$(echo "$line" | cut -d: -f1)
         col_names+=("$col_name")
     done < "$meta_file"
     
-    echo -e "\nTable Data\n"
+    echo "\nTable Data\n"
     
-    echo -e "${col_names[@]} \n"
+    echo "${col_names[@]} \n"
     
-    while IFS= read -r line; do
+    while read -r line; do
         IFS='|' read -ra values <<< "$line"
-        echo -e  "${values[@]}\n"
+        echo  "${values[@]}\n"
     done < "$table_file"
 }
 
@@ -94,27 +94,27 @@ delete_from_table() {
     local meta_file="$DB_DIR/$CURRENT_DB/.$table_name.meta"
     
     if [ ! -f "$table_file" ]; then
-        echo -e "No table with that name : $table_name"
+        echo "No table with that name : $table_name"
         return
     fi
     
     local primary_key=""
-    local primary_key_index=-1
+    # local primary_key_index=-1
     
-    while IFS= read -r line; do
+    while read -r line; do
         local col_name=$(echo "$line" | cut -d: -f1)
         local col_constraint=$(echo "$line" | cut -d: -f3)
         
         if [ "$col_constraint" = "PRIMARY KEY" ]; then
             primary_key="$col_name"
-            primary_key_index=$(($primary_key_index + 1))
+            # primary_key_index=$(($primary_key_index + 1))
             break
         fi
-        primary_key_index=$(($primary_key_index + 1))
+        # primary_key_index=$(($primary_key_index + 1))
     done < "$meta_file"
     
     if [ -z "$primary_key" ]; then
-        echo -e "No primary key defined for this table"
+        echo "No primary key defined for this table"
         return
     fi
     
@@ -128,11 +128,11 @@ delete_from_table() {
     local new_lines=$(wc -l < "$temp_file")
     
     if [ $original_lines -eq $new_lines ]; then
-        echo -e "No record found with this primary key"
+        echo "No record found"
         rm -f "$temp_file"
     else
         mv "$temp_file" "$table_file"
-        echo -e "Record deleted successfully"
+        echo "deleted successfully"
     fi
 }
 
@@ -146,7 +146,7 @@ update_table() {
     local meta_file="$DB_DIR/$CURRENT_DB/.$table_name.meta"
     
     if [ ! -f "$table_file" ]; then
-        echo -e "No table with that name : $table_name"
+        echo "No table with that name : $table_name"
         return
     fi
     
@@ -155,7 +155,7 @@ update_table() {
     local primary_key=""
     local primary_key_index=-1
     
-    while IFS= read -r line; do
+    while read -r line; do
         local col_name=$(echo "$line" | cut -d: -f1)
         local col_type=$(echo "$line" | cut -d: -f2)
         local col_constraint=$(echo "$line" | cut -d: -f3)
@@ -170,7 +170,7 @@ update_table() {
     done < "$meta_file"
     
     if [ -z "$primary_key" ]; then
-        echo -e "the table dosn't have primary key"
+        echo "the table dosn't have primary key"
         return
     fi
     
@@ -180,7 +180,7 @@ update_table() {
     local target_line=""
     local target_index=-1
     
-    while IFS= read -r line; do
+    while read -r line; do
         IFS='|' read -ra values <<< "$line"
         if [ "${values[0]}" = "$value" ]; then
             target_line="$line"
@@ -191,17 +191,17 @@ update_table() {
     done < "$table_file"
     
     if [ $target_index -eq -1 ]; then
-        echo -e "404 : No record found with this primary key"
+        echo "404 : No record found with this primary key"
         return
     fi
     
-    echo -e "\nCurrent values:"
+    echo "\nCurrent values:"
     for i in "${!col_names[@]}"; do
         IFS='|' read -ra values <<< "$target_line"
         echo "${col_names[$i]}: ${values[$i]}"
     done
     
-    echo -e "\nEnter new values (press Enter to keep current value):"
+    echo "\nEnter new values - press Enter to keep current value:"
     local new_values=()
     IFS='|' read -ra old_values <<< "$target_line"
     
@@ -213,11 +213,12 @@ update_table() {
         fi
         
         read -p "${col_names[$i]} (${col_types[$i]}): " new_value
+
         if [ -z "$new_value" ]; then
             new_values+=("${old_values[$i]}")
         else
             if [ "${col_types[$i]}" = "int" ] && [[ ! "$new_value" =~ ^-?[0-9]+$ ]]; then
-                echo -e "Invalid integer value. Keeping current value"
+                echo "Invalid int value"
                 new_values+=("${old_values[$i]}")
             else
                 new_values+=("$new_value")
@@ -228,7 +229,7 @@ update_table() {
     local temp_file="$DB_DIR/$CURRENT_DB/.$table_name.tmp"
     
     line_number=0
-    while IFS= read -r line; do
+    while read -r line; do
         if [ $line_number -eq $target_index ]; then
             echo $(IFS="|"; echo "${new_values[*]}") >> "$temp_file"
         else
@@ -238,5 +239,5 @@ update_table() {
     done < "$table_file"
     
     mv "$temp_file" "$table_file"
-    echo -e "Record updated successfully"
+    echo "updated successfully"
 }
