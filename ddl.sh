@@ -1,7 +1,8 @@
+
 create_table() {
     read -p "Enter table name: " table_name
     if [[ ! "$table_name" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]]; then
-        echo -e "Wring table name. can't include special chars"
+        echo "Wring table name. can't include special chars"
         return
     fi
     
@@ -9,7 +10,7 @@ create_table() {
     local meta_file="$DB_DIR/$CURRENT_DB/.$table_name.meta"
     
     if [ -f "$table_file" ]; then
-        echo -e "Table '$table_name' already exists "
+        echo "Table '$table_name' already exists "
         return
     fi
     
@@ -30,8 +31,8 @@ create_table() {
         
         
         local col_name=$(echo "$column_input" | cut -d' ' -f1)
-	local col_type=$(echo "$column_input" | cut -d' ' -f2)
-	local col_constraint=$(echo "$column_input" | cut -d' ' -f3)
+        local col_type=$(echo "$column_input" | cut -d' ' -f2)
+        local col_constraint=$(echo "$column_input" | cut -d' ' -f3)
         
         if [ -z "$col_name" ] || [ -z "$col_type" ]; then
             echo -e "Wring input. write: column_name datatype [PRIMARY KEY] *optinal"
@@ -63,6 +64,7 @@ create_table() {
         return
     fi
     
+    # warning 
     if [ -z "$primary_key" ]; then
         echo -e "No primary key specified"
     fi
@@ -81,19 +83,16 @@ create_table() {
 
 
 list_tables() {
-    echo -e "tables in '$CURRENT_DB'"
-#    local tables=($(find "$DB_DIR/$CURRENT_DB" -maxdepth 1 -type f -name "*.meta" | sed 's/.*\.//' | sed 's/\.meta//' | grep -v "^\\."))
-    mapfile -t tables < <(ls -1 "$DB_DIR/$CURRENT_DB")
-    
-    if [ ${#tables[@]} -eq 0 ]; then
+    echo "tables in '$CURRENT_DB'"
+
+    if [ -z "$(ls -A "$DB_DIR/$CURRENT_DB" 2>/dev/null)" ]; then
         echo "No tables found."
     else
-        for table in "${tables[@]}"; do
+        for table in "$DB_DIR/$CURRENT_DB"/*; do
             echo "- $table"
         done
     fi
 }
-
 
 
 drop_table() {
