@@ -85,7 +85,7 @@ create_table() {
 list_tables() {
     echo "tables in '$CURRENT_DB'"
 
-    if [ -z "$(ls -A "$DB_DIR/$CURRENT_DB" 2>/dev/null)" ]; then
+    if [ -z "$(ls -A "$DB_DIR/$CURRENT_DB")" ]; then
         echo "No tables found."
     else
         for table in "$DB_DIR/$CURRENT_DB"/*; do
