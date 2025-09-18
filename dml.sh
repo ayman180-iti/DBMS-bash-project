@@ -1,4 +1,3 @@
-dml.sh
 insert_into_table() {
     read -p "Enter table name: " table_name
     local table_file="$DB_DIR/$CURRENT_DB/$table_name"
